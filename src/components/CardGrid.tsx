@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { messages } from "../data/messages"
 import { Card } from "./Card"
@@ -23,31 +23,14 @@ export function CardGrid({ openCard, isOpened }: CardGridProps) {
   const [order] = useState(() => shuffleArray(messages))
   const [phase, setPhase] = useState<Phase>("entrance")
   const [revealedId, setRevealedId] = useState<number | null>(null)
-  const autoCloseRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => setPhase("idle"), messages.length * 40 + 600)
     return () => clearTimeout(timer)
   }, [])
 
-  const clearAutoClose = useCallback(() => {
-    if (autoCloseRef.current) {
-      clearTimeout(autoCloseRef.current)
-      autoCloseRef.current = null
-    }
-  }, [])
-
-  const scheduleAutoClose = useCallback(() => {
-    clearAutoClose()
-    autoCloseRef.current = setTimeout(() => {
-      setRevealedId(null)
-      setPhase("idle")
-    }, 6000)
-  }, [clearAutoClose])
-
   const handleShuffle = useCallback(() => {
     if (phase === "shuffling") return
-    clearAutoClose()
 
     const target = order[Math.floor(Math.random() * order.length)]
 
@@ -59,7 +42,6 @@ export function CardGrid({ openCard, isOpened }: CardGridProps) {
           setRevealedId(target.id)
           openCard(target.id)
           setPhase("revealed")
-          scheduleAutoClose()
         }, 1000)
       }, 200)
     } else {
@@ -68,16 +50,14 @@ export function CardGrid({ openCard, isOpened }: CardGridProps) {
         setRevealedId(target.id)
         openCard(target.id)
         setPhase("revealed")
-        scheduleAutoClose()
       }, 1000)
     }
-  }, [phase, order, openCard, clearAutoClose, scheduleAutoClose])
+  }, [phase, order, openCard])
 
   const handleClose = useCallback(() => {
-    clearAutoClose()
     setRevealedId(null)
     setPhase("idle")
-  }, [clearAutoClose])
+  }, [])
 
   const showButton = phase === "idle" || phase === "revealed"
 
